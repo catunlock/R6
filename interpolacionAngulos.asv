@@ -1,0 +1,11 @@
+function [x,y] = f1(x1,y1,z1)
+Torig = [0,0,0,0,0,0];
+Tdest = [90,-90,0,0,0,0];
+ 
+pasos = jtraj(Torig, Tdest, 100);
+
+for i = 1:100
+    simulador(pasos(i,:));
+    drawnow;
+end
+    
