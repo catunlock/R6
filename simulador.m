@@ -114,10 +114,10 @@ else
         set(L6, 'Vertices', Link6(:,1:3))
         set(L7, 'Vertices', Link7(:,1:3))
         trplot(h, eye(4), 'length', 550, 'arrow');
-        trplot(h, T06);
+        %trplot(h, T06);
         
         %disp( T06(:,4))
         
-        plot3(T06(1,4),T06(2,4),T06(3,4), '*m');
+        %plot3(T06(1,4),T06(2,4),T06(3,4), '*m');
 end 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
