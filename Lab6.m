@@ -80,9 +80,16 @@ for i = 1:27:540
     trplot(eje(:,:,i), 'length', 100);
 end
 
+while true
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Proceso de soldadura por puntos.
 posRobot = transl(1000,-1000,1250);
 
+standBy = simulador([0 0 0 0 0 0]);
+primera = tuboPos*troty(1-260,'deg')*transl(190,-220,0)*transl(100,440-0.82,0)*...
+         trotx(-90,'deg')*troty(-45,'deg'); 
+
+interpolacionTransformaciones(posRobot, standBy, primera, 100, -1, -1, -1);
 
 
 for i=1:27:540
@@ -92,15 +99,47 @@ for i=1:27:540
      poseAct = tuboPos*troty((i+27)-260,'deg')*transl(190,-220,0)*transl(100,440-0.82*(i+27),0)*...
          trotx(-90,'deg')*troty(-45,'deg');
      
-     interpolacionTransformaciones(posRobot, posePrev, poseAct, 40, -1, -1, -1);
+     interpolacionTransformaciones(posRobot, posePrev, poseAct, 4, -1, -1, -1);
 end
 
-pause(1);
+ultima = tuboPos*troty((540+27)-260,'deg')*transl(190,-220,0)*transl(100,440-0.82*(540+27),0)*...
+         trotx(-90,'deg')*troty(-45,'deg');
 
+cojerTubo = (transl(750, -225, 850)*trotx(-20, 'deg')*transl(200, 0, 200)*trotx(-pi/2)*eye(4)); 
+cojerTubo = transl(0,-125,0)*cojerTubo;
+
+interpolacionTransformaciones(posRobot, ultima, cojerTubo, 40, -1, -1, -1);
+
+cojerTuboFin = transl(0,-100,0)*cojerTubo;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Torig = inv(transl(1000,-1000,1250))*cojerTubo;
+Tdest = inv(transl(1000,-1000,1250))*cojerTuboFin;
+pasos = ctraj(Torig, Tdest, 40);
+
+for i = 1:40
+    transfo = simulador(PumaIK(pasos(:,:,i),-1,-1,-1)) * transl(-100,100,175)* trotx(pi/2);
+    transfo2 = simulador(PumaIK(pasos(:,:,i),-1,-1,-1)) * transl(-200,200,175)* trotx(pi/2);
+    auxi = (transfo * tuboAux)';
+    auxi2 = (transfo2 * chapaAux)';
+    set(L1, 'Vertices', auxi(:,1:3) );
+    set(L2, 'Vertices', auxi2(:,1:3) );
+    drawnow;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Cambiar los angulos del robot de -1, -1, -1 a 1, 1, -1.
+Tdest = PumaIK(inv(transl(1000,-1000,1250))*cojerTuboFin, 1, 1, -1);
+Torig = PumaIK(inv(transl(1000,-1000,1250))*cojerTuboFin, -1, -1, -1);
+pasos = jtraj(Torig, Tdest, 100);
+for i = 1:100
+    simulador(pasos(i,:));
+    drawnow;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Ponemos el tubo en el suelo.
 Tdest = [0,-12,12,0,0,0];
-tuboCojer = (transl(750, -225, 850)*trotx(-20, 'deg')*transl(200, 0, 200)*trotx(-pi/2)*eye(4));
-trplot(tuboCojer);
-Torig = PumaIK(inv(transl(1000,-1000,1250))*transl(0,-125,0)*tuboCojer, 1, 1, -1);
+Torig = PumaIK(inv(transl(1000,-1000,1250))*cojerTuboFin, 1, 1, -1);
 pasos = jtraj(Torig, Tdest, 100);
 
 for i = 1:100
@@ -111,4 +150,14 @@ for i = 1:100
     set(L1, 'Vertices', auxi(:,1:3) );
     set(L2, 'Vertices', auxi2(:,1:3) );
     drawnow;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Colocamos el siguiente tubo a soldar.
+aux2 = (transl(750, -225, 850)*trotx(-20, 'deg')*chapaAux)';
+set(L1, 'Vertices', aux2(:,1:3) );
+
+aux2 = (transl(750, -225, 850)*trotx(-20, 'deg')*transl(100, 0, 100)*tuboAux)';
+set(L2, 'Vertices', aux2(:,1:3) );
+
 end
